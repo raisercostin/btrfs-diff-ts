@@ -66,7 +66,7 @@ https://github.com/sysnux/btrfs-snapshots-diff
 
 Script from https://github.com/sysnux/btrfs-snapshots-diff/blob/master/btrfs-snapshots-diff.py
 
-```shell
+````shell
 btrfs send -p /mnt/btrfs-temp/subvol1 /mnt/btrfs-temp/subvol1 >a.dump
 python3 bd.py --file=a.dump --json
 <<OUT
@@ -80,11 +80,10 @@ subvol1
 
 Dump 
 OUT
+
 sudo btrfs send -p /volume1/testsrc/#snapshots-snap1 /volume1/testsrc/#snapshots-snap2 > c.dump
 sudo python3 bd.py --file=c.dump -b --csv
-```
-
-```csv
+<<OUT
 snapshot;clone_ctransid=7065512;clone_uuid=e06b51934558ad498f02662c8d827341;ctransid=7065600;path=#snapshots-snap2;uuid=2eac4ccd48a45545a8878febc8894584
 utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
 link;path=file2-torename2.txt;path_link=file2-torename.txt
@@ -105,7 +104,8 @@ write;data=(102, 105, 108, 101, 53, 10);file_offset=0;path=file5-added.txt
 chmod;mode=384;path=file5-added.txt
 utimes;atime=1736332166.0997252;ctime=1736332166.0997252;mtime=1736332166.0997252;path=file5-added.txt
 end;headers_length=1098;stream_length=1098
-```
+OUT
+````
 
 ## Test
 
