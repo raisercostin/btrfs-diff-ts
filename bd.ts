@@ -568,31 +568,28 @@ await new Command<AppConfig>()
   .option("-o, --with-own [mode:string]", "Include ownership modifications.")
   .option("-a, --with-attr [mode:string]", "Include attribute modifications.")
   .arguments("[parent:string] [child:string]") // Make parent and child optional
-  .action(async (config: AppConfig, parent?: string, child?: string) => {
+  .action(async function(config: AppConfig, parent?: string, child?: string) {
     const diff = new DiffApp(config);
 
     // Validate input: either `--file` or both `parent` and `child` must be provided
+    let changes
     if (config.file) {
       const streamfile = Deno.realPathSync(config.file);
       console.log(`Processing stream file: ${streamfile}`);
-      const changes = await diff.getChangesFromStreamFile(streamfile);
-      if (changes.length > 0) {
-        changes.sort();
-        console.log(changes.join("\n"));
-        Deno.exit(1);
-      }
+      changes = await diff.getChangesFromStreamFile(streamfile)
     } else if (parent && child) {
       const parentPath = Deno.realPathSync(parent);
       const childPath = Deno.realPathSync(child);
       console.log(`Comparing parent: ${parentPath} and child: ${childPath}`);
-      const changes = await diff.getChangesFromTwoSubvolumes(parentPath, childPath);
-      if (changes.length > 0) {
-        changes.sort();
-        console.log(changes.join("\n"));
-        Deno.exit(1);
-      }
+      changes = await diff.getChangesFromTwoSubvolumes(parentPath, childPath);
     } else {
       console.error("Error: You must specify either '--file' or both <parent> and <child> arguments.");
+      this.showHelp()
+      Deno.exit(1);
+    }
+    if (changes && changes.length > 0) {
+      changes.sort();
+      console.log(changes.join("\n"));
       Deno.exit(1);
     }
   })
