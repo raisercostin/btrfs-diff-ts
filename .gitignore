@@ -2,3 +2,5 @@
 /*.mtree
 /*.tree
 /test-data
+/btrfs-diff-go
+/bd.go

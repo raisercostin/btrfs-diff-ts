@@ -23,6 +23,9 @@
     - https://raw.githubusercontent.com/bcpierce00/unison/documentation/unison-manual.txt
     - [Intellisync](https://www.intellisync.com.mx/portal/)
     - [Reconcile](https://www.merl.com/publications/docs/TR99-14.pdf)
+- btrfs diffs
+  - https://github.com/openSUSE/snapper
+- diffs
 
 ## Development
 
@@ -30,82 +33,6 @@
 
 The binary format created by `btrfs send` is here:
 https://btrfs.readthedocs.io/en/latest/dev/dev-send-stream.html#attributes-tlv-types
-
-### Existing implementations
-
-#### Btrfs dump
-
-```sh
-sudo btrfs send -p /volume1/test/#snapshots-snap1 /volume1/test/#snapshots-snap2| btrfs receive --dump
-<<OUT
-At subvol /volume1/testsrc/#snapshots-snap2
-snapshot        ./#snapshots-snap2              uuid=2eac4ccd-48a4-5545-a887-8febc8894584 transid=7065600 parent_uuid=e06b5193-4558-ad49-8f02-662c8d827341 parent_transid=7065512
-utimes          ./#snapshots-snap2/             atime=2025-01-08T12:29:33+0200 mtime=2025-01-08T12:29:26+0200 ctime=2025-01-08T12:29:26+0200
-link            ./#snapshots-snap2/file2-torename2.txt dest=file2-torename.txt
-unlink          ./#snapshots-snap2/file2-torename.txt
-utimes          ./#snapshots-snap2/             atime=2025-01-08T12:29:33+0200 mtime=2025-01-08T12:29:26+0200 ctime=2025-01-08T12:29:26+0200
-utimes          ./#snapshots-snap2/             atime=2025-01-08T12:29:33+0200 mtime=2025-01-08T12:29:26+0200 ctime=2025-01-08T12:29:26+0200
-utimes          ./#snapshots-snap2/file2-torename2.txt atime=2025-01-08T11:35:45+0200 mtime=2025-01-08T11:35:45+0200 ctime=2025-01-08T12:29:26+0200
-unlink          ./#snapshots-snap2/file3-todelete.txt
-utimes          ./#snapshots-snap2/             atime=2025-01-08T12:29:33+0200 mtime=2025-01-08T12:29:26+0200 ctime=2025-01-08T12:29:26+0200
-write           ./#snapshots-snap2/file4-tochange.txt offset=0 len=31
-utimes          ./#snapshots-snap2/file4-tochange.txt atime=2025-01-08T11:35:45+0200 mtime=2025-01-08T12:29:26+0200 ctime=2025-01-08T12:29:26+0200
-mkfile          ./#snapshots-snap2/o266-7065599-0
-chown           ./#snapshots-snap2/o266-7065599-0 gid=100 uid=1026
-rename          ./#snapshots-snap2/o266-7065599-0 dest=./#snapshots-snap2/file5-added.txt
-utimes          ./#snapshots-snap2/             atime=2025-01-08T12:29:33+0200 mtime=2025-01-08T12:29:26+0200 ctime=2025-01-08T12:29:26+0200
-write           ./#snapshots-snap2/file5-added.txt offset=0 len=6
-chmod           ./#snapshots-snap2/file5-added.txt mode=600
-utimes          ./#snapshots-snap2/file5-added.txt atime=2025-01-08T12:29:26+0200 mtime=2025-01-08T12:29:26+0200 ctime=2025-01-08T12:29:26+0200
-OUT
-```
-
-#### Python Script Usage
-
-https://github.com/sysnux/btrfs-snapshots-diff
-
-Script from https://github.com/sysnux/btrfs-snapshots-diff/blob/master/btrfs-snapshots-diff.py
-
-````shell
-btrfs send -p /mnt/btrfs-temp/subvol1 /mnt/btrfs-temp/subvol1 >a.dump
-python3 bd.py --file=a.dump --json
-<<OUT
-[{"command": "snapshot", "path": "subvol1", "uuid": "a667a889f7f3424c89cf41a7b7a929d9", "ctransid": 10, "clone_uuid": "a667a889f7f3424c89cf41a7b7a929d9", "clone_ctransid": 10}, {"command": "end", "headers_length": 112, "stream_length": 112}]
-OUT
-python3 bd.py --file=a.dump --by_path --bogus
-<<OUT
-Found a valid Btrfs stream header, version 1
-subvol1
-        snapshot: uuid=a667a889f7f3424c89cf41a7b7a929d9, ctransid=10, clone_uuid=a667a889f7f3424c89cf41a7b7a929d9, clone_ctransid=10
-
-Dump 
-OUT
-
-sudo btrfs send -p /volume1/testsrc/#snapshots-snap1 /volume1/testsrc/#snapshots-snap2 > c.dump
-sudo python3 bd.py --file=c.dump -b --csv
-<<OUT
-snapshot;clone_ctransid=7065512;clone_uuid=e06b51934558ad498f02662c8d827341;ctransid=7065600;path=#snapshots-snap2;uuid=2eac4ccd48a45545a8878febc8894584
-utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
-link;path=file2-torename2.txt;path_link=file2-torename.txt
-unlink;path=file2-torename.txt
-utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
-utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
-utimes;atime=1736328945.6687818;ctime=1736332166.1827264;mtime=1736328945.6687818;path=file2-torename2.txt
-unlink;path=file3-todelete.txt
-utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
-write;data=(102, 105, 108, 101, 52, 45, 116, 111, 99, 104, 97, 110, 103, 101, 10, 92, 110, 102, 105, 108, 101, 52, 45, 110, 101, 119, 108, 105, 110, 101, 10);file_offset=0;path=file4-tochange.txt
-utimes;atime=1736328945.700782;ctime=1736332166.2007265;mtime=1736332166.2007265;path=file4-tochange.txt
-mkfile;path=o266-7065599-0
-chown;group_id=100;path=o266-7065599-0;user_id=1026
-renamed_from;path=o266-7065599-0;path_to=file5-added.txt
-rename;path=o266-7065599-0;path_to=file5-added.txt
-utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
-write;data=(102, 105, 108, 101, 53, 10);file_offset=0;path=file5-added.txt
-chmod;mode=384;path=file5-added.txt
-utimes;atime=1736332166.0997252;ctime=1736332166.0997252;mtime=1736332166.0997252;path=file5-added.txt
-end;headers_length=1098;stream_length=1098
-OUT
-````
 
 ## Test
 
@@ -155,7 +82,7 @@ sudo chmod -R 777 /volume1/test
 sudo ls -al /volume1/test
 ```
 
-### Create Test Files
+### Create Test Fixture
 
 Assuming `/volume1/test` and `/volume2/test` are two different btrfs volumes, so no shared extents(shared data blocks) between them.
 
@@ -297,13 +224,165 @@ sudo /home/raiseru/.deno/bin/deno --allow-read --allow-run --unstable-temporal b
 
 ### BTRFS PY DIFF
 
-> sudo python3 bd.py -p /volume1/test/#snapshots-snap1/ -c /volume1/test/#snapshots-snap2/ -a
+Source: https://github.com/sysnux/btrfs-snapshots-diff
+Script 'bd.py' from https://github.com/sysnux/btrfs-snapshots-diff/blob/master/btrfs-snapshots-diff.py
 
-### BTRFS GO DIFF
+```shell
+sudo python3 bd.py -p /volume1/test/#snapshots-snap1/ -c /volume1/test/#snapshots-snap2/ --csv|sed "s/;/,/g"
+```
 
-> sudo python3 bd.py -p /volume1/test/#snapshots-snap1/ -c /volume1/test/#snapshots-snap2/ -a
+```csv
+snapshot,clone_ctransid=13,clone_uuid=dcf97a69908c1745978b2de857cb287d,ctransid=13,path=#snapshots-snap2,uuid=10a296565a025a4d9ac582a1a7e750aa
+utimes,atime=1736600197.0547864,ctime=1736600197.0347865,mtime=1736600197.0347865,path=
+link,path=file2-torename2.txt,path_link=file2-torename.txt
+unlink,path=file2-torename.txt
+utimes,atime=1736600197.0547864,ctime=1736600197.0347865,mtime=1736600197.0347865,path=
+utimes,atime=1736600197.0547864,ctime=1736600197.0347865,mtime=1736600197.0347865,path=
+utimes,atime=1736600004.9947915,ctime=1736600197.0347865,mtime=1736600004.9947915,path=file2-torename2.txt
+unlink,path=file3-todelete.txt
+utimes,atime=1736600197.0547864,ctime=1736600197.0347865,mtime=1736600197.0347865,path=
+update_extent,file_offset=0,path=file4-tochange.txt,size=31
+utimes,atime=1736600296.254791,ctime=1736600197.0347865,mtime=1736600197.0347865,path=file4-tochange.txt
+mkfile,path=o266-11-0
+rename,path=o266-11-0,path_to=file5-added.txt
+utimes,atime=1736600197.0547864,ctime=1736600197.0347865,mtime=1736600197.0347865,path=
+update_extent,file_offset=0,path=file5-added.txt,size=6
+chown,group_id=1000,path=file5-added.txt,user_id=1000
+chmod,mode=420,path=file5-added.txt
+utimes,atime=1736600197.0247865,ctime=1736600197.0247865,mtime=1736600197.0247865,path=file5-added.txt
+end,headers_length=1068,stream_length=1068
+```
 
-### BTRFS DIFF
+```shell
+sudo python3 bd.py -p /volume1/test/#snapshots-snap1/ -c /volume1/test/#snapshots-snap2/ --json|sed "s/{/\n{/g"
+```
+
+```json
+[
+{"command": "snapshot", "path": "#snapshots-snap2", "uuid": "10a296565a025a4d9ac582a1a7e750aa", "ctransid": 13, "clone_uuid": "dcf97a69908c1745978b2de857cb287d", "clone_ctransid": 13},
+{"command": "utimes", "path": "", "atime": 1736600197.0547864, "mtime": 1736600197.0347865, "ctime": 1736600197.0347865},
+{"command": "link", "path": "file2-torename2.txt", "path_link": "file2-torename.txt"},
+{"command": "unlink", "path": "file2-torename.txt"},
+{"command": "utimes", "path": "", "atime": 1736600197.0547864, "mtime": 1736600197.0347865, "ctime": 1736600197.0347865},
+{"command": "utimes", "path": "", "atime": 1736600197.0547864, "mtime": 1736600197.0347865, "ctime": 1736600197.0347865},
+{"command": "utimes", "path": "file2-torename2.txt", "atime": 1736600004.9947915, "mtime": 1736600004.9947915, "ctime": 1736600197.0347865},
+{"command": "unlink", "path": "file3-todelete.txt"},
+{"command": "utimes", "path": "", "atime": 1736600197.0547864, "mtime": 1736600197.0347865, "ctime": 1736600197.0347865},
+{"command": "update_extent", "path": "file4-tochange.txt", "file_offset": 0, "size": 31},
+{"command": "utimes", "path": "file4-tochange.txt", "atime": 1736600296.254791, "mtime": 1736600197.0347865, "ctime": 1736600197.0347865},
+{"command": "mkfile", "path": "o266-11-0"},
+{"command": "rename", "path": "o266-11-0", "path_to": "file5-added.txt"},
+{"command": "utimes", "path": "", "atime": 1736600197.0547864, "mtime": 1736600197.0347865, "ctime": 1736600197.0347865},
+{"command": "update_extent", "path": "file5-added.txt", "file_offset": 0, "size": 6},
+{"command": "chown", "path": "file5-added.txt", "user_id": 1000, "group_id": 1000},
+{"command": "chmod", "path": "file5-added.txt", "mode": 420},
+{"command": "utimes", "path": "file5-added.txt", "atime": 1736600197.0247865, "mtime": 1736600197.0247865, "ctime": 1736600197.0247865},
+{"command": "end", "headers_length": 1068, "stream_length": 1068}]
+```
+
+````shell
+btrfs send -p /mnt/btrfs-temp/subvol1 /mnt/btrfs-temp/subvol1 >a.dump
+python3 bd.py --file=a.dump --json
+<<OUT
+[{"command": "snapshot", "path": "subvol1", "uuid": "a667a889f7f3424c89cf41a7b7a929d9", "ctransid": 10, "clone_uuid": "a667a889f7f3424c89cf41a7b7a929d9", "clone_ctransid": 10}, {"command": "end", "headers_length": 112, "stream_length": 112}]
+OUT
+python3 bd.py --file=a.dump --by_path --bogus
+<<OUT
+Found a valid Btrfs stream header, version 1
+subvol1
+        snapshot: uuid=a667a889f7f3424c89cf41a7b7a929d9, ctransid=10, clone_uuid=a667a889f7f3424c89cf41a7b7a929d9, clone_ctransid=10
+
+Dump 
+OUT
+
+sudo btrfs send -p /volume1/testsrc/#snapshots-snap1 /volume1/testsrc/#snapshots-snap2 > c.dump
+sudo python3 bd.py --file=c.dump -b --csv
+<<OUT
+snapshot;clone_ctransid=7065512;clone_uuid=e06b51934558ad498f02662c8d827341;ctransid=7065600;path=#snapshots-snap2;uuid=2eac4ccd48a45545a8878febc8894584
+utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
+link;path=file2-torename2.txt;path_link=file2-torename.txt
+unlink;path=file2-torename.txt
+utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
+utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
+utimes;atime=1736328945.6687818;ctime=1736332166.1827264;mtime=1736328945.6687818;path=file2-torename2.txt
+unlink;path=file3-todelete.txt
+utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
+write;data=(102, 105, 108, 101, 52, 45, 116, 111, 99, 104, 97, 110, 103, 101, 10, 92, 110, 102, 105, 108, 101, 52, 45, 110, 101, 119, 108, 105, 110, 101, 10);file_offset=0;path=file4-tochange.txt
+utimes;atime=1736328945.700782;ctime=1736332166.2007265;mtime=1736332166.2007265;path=file4-tochange.txt
+mkfile;path=o266-7065599-0
+chown;group_id=100;path=o266-7065599-0;user_id=1026
+renamed_from;path=o266-7065599-0;path_to=file5-added.txt
+rename;path=o266-7065599-0;path_to=file5-added.txt
+utimes;atime=1736332173.1468213;ctime=1736332166.1887264;mtime=1736332166.1887264;path=
+write;data=(102, 105, 108, 101, 53, 10);file_offset=0;path=file5-added.txt
+chmod;mode=384;path=file5-added.txt
+utimes;atime=1736332166.0997252;ctime=1736332166.0997252;mtime=1736332166.0997252;path=file5-added.txt
+end;headers_length=1098;stream_length=1098
+OUT
+````
+
+### BTRFS GO DIFF - bucko909
+
+Source: https://github.com/bucko909/btrfs-send-go
+Scripts: https://github.com/bucko909/btrfs-send-go/blob/master/test.go
+
+```shell
+sudo apt install golang-go libbtrfs-dev
+wget https://raw.githubusercontent.com/bucko909/btrfs-send-go/refs/heads/master/test.go -O bd.go
+sudo go run bd.go /volume1/test/#snapshots-snap1/ /volume1/test/#snapshots-snap2/
+<<OUT
+root_id 256
+Cmd [15 0 16 0 35 115 110 97 112 115 104 111 116 115 45 115 110 97 112 50 1 0 16 0 16 162 150 86 90 2 90 77 154 197 130 161 167 231 80 170 2 0 8 0 13 0 0 0 0 0 0 0 20 0 16 0 220 249 122 105 144 140 23 69 151 139 45 232 87 203 40 125 21 0 8 0 13 0 0 0 0 0 0 0]; type 2
+Cmd [15 0 0 0 11 0 12 0 133 106 130 103 0 0 0 0 74 249 67 3 10 0 12 0 133 106 130 103 0 0 0 0 72 204 18 2 9 0 12 0 133 106 130 103 0 0 0 0 72 204 18 2]; type 20
+TRACE       BTRFS_SEND_C_UTIMES
+TRACE    changed
+...
+TRACE    changed file5-added.txt
+Cmd [15 0 15 0 102 105 108 101 53 45 97 100 100 101 100 46 116 120 116 11 0 12 0 133 106 130 103 0 0 0 0 199 53 122 1 10 0 12 0 133 106 130 103 0 0 0 0 199 53 122 1 9 0 12 0 133 106 130 103 0 0 0 0 199 53 122 1]; type 20
+TRACE       BTRFS_SEND_C_UTIMES file5-added.txt
+TRACE    changed file5-added.txt
+Cmd []; type 21
+END
+new: map[:(map[file2-torename2.txt:(map[], added, file2-torename2.txt) file4-tochange.txt:(map[], changed, file4-tochange.txt) file5-added.txt:(map[], added, file5-added.txt)], changed, ) /file2-torename2.txt:(map[], added, file2-torename2.txt) /file4-tochange.txt:(map[], changed, file4-tochange.txt) /file5-added.txt:(map[], added, file5-added.txt)]
+(map[file2-torename2.txt:(map[], added, file2-torename2.txt) file4-tochange.txt:(map[], changed, file4-tochange.txt) file5-added.txt:(map[], added, file5-added.txt)], changed, )
+old: map[:(map[file2-torename.txt:(map[], deleted, file2-torename.txt) file3-todelete.txt:(map[], deleted, file3-todelete.txt) file4-tochange.txt:(map[], !!!, file4-tochange.txt)], !!!, ) /file2-torename.txt:(map[], deleted, file2-torename.txt) /file3-todelete.txt:(map[], deleted, file3-todelete.txt) /file4-tochange.txt:(map[], !!!, file4-tochange.txt)]
+(map[file2-torename.txt:(map[], deleted, file2-torename.txt) file3-todelete.txt:(map[], deleted, file3-todelete.txt) file4-tochange.txt:(map[], !!!, file4-tochange.txt)], !!!, )
+TRACE GENERATED
+TRACE    deleted: /file3-todelete.txt
+TRACE    changed: /file4-tochange.txt
+TRACE    deleted: /file2-torename.txt
+TRACE      added: /file2-torename2.txt
+TRACE      added: /file5-added.txt
+OUT
+```
+
+### BTRFS GO DIFF - mbideau (upgrade on bucko909)
+
+Source: https://github.com/mbideau/btrfs-diff-go/
+Script: https://github.com/bucko909/btrfs-send-go/blob/master/test.go
+
+Author words
+> Raw, and have minor bugs, but does exactly the job.
+> I have improved it in my own fork, but it seems to crash on clone instructions.
+> Also, having a compiled binary, is not super hackable (even a tiny one like this) and at deployment time, it might miss some dependencies (I have managed to build it statically but it doesn't work in my initram, I have not found out why).
+> Finally it was not translatable (as-is).
+
+```shell
+git clone https://github.com/mbideau/btrfs-diff-go
+(cd btrfs-diff-go/; sudo go run main.go /volume1/test/#snapshots-snap1/ /volume1/test/#snapshots-snap2/)
+<<OUT
+  added: /file2-torename2.txt
+  added: /file5-added.txt
+changed: /file4-tochange.txt
+deleted: /file2-torename.txt
+deleted: /file3-todelete.txt
+exit status 1
+OUT
+```
+
+### NO-BTRFS DIFF
+
+The methods that are ignoring the btrfs are not performant but are good usage examples
 
 ```shell
 diff -rqc /volume1/test/#snapshots-snap1/ /volume1/test/#snapshots-snap2/
@@ -333,10 +412,6 @@ diff -r -c -a /volume1/test/#snapshots-snap1/file4-tochange.txt /volume1/test/#s
 Only in /volume1/test/#snapshots-snap2/: file5-added.txt
 OUT
 ```
-
-### NO-BTRFS DIFF
-
-The methods that are ignoring the btrfs are not performant but are good usage examples
 
 ```shell
 # sudo apt install bat
