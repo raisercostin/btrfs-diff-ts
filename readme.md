@@ -149,6 +149,7 @@ echo "b-file4-tochange" > /volume1/test/b/bfile4-tochange.txt
 sudo btrfs subvolume snapshot /volume1/test /volume1/test/#snapshots-snap1
 
 tree -L 4 /volume1/test -f -p -gs -F -D --timefmt "%Y-%m-%d--%H-%M-%S" --inodes -h --metafirst | tee file1.tree
+<<OUT
 [    256 drwxr-xr-x raiseru   160 2025-01-11--14-53-57]  /volume1/test/
 [    256 drwxr-xr-x raiseru   128 2025-01-11--14-53-25]  ├── /volume1/test/#snapshots-snap1/
 [    261 drwxr-xr-x raiseru   134 2025-01-11--14-53-25]  │   ├── /volume1/test/#snapshots-snap1/b/
@@ -171,6 +172,7 @@ tree -L 4 /volume1/test -f -p -gs -F -D --timefmt "%Y-%m-%d--%H-%M-%S" --inodes 
 [    260 -rw-r--r-- raiseru    15 2025-01-11--14-53-24]  └── /volume1/test/file4-tochange.txt
 
 3 directories, 16 files
+OUT
 
 echo "file5" > /volume1/test/file5-added.txt
 mv /volume1/test/file2-torename.txt /volume1/test/file2-torename2.txt
@@ -178,6 +180,7 @@ rm /volume1/test/file3-todelete.txt
 echo "\nfile4-newline" >> /volume1/test/file4-tochange.txt
 sudo btrfs subvolume snapshot /volume1/test /volume1/test/#snapshots-snap2
 tree -L 4 /volume1/test -f -p -gs -F -D --timefmt "%Y-%m-%d--%H-%M-%S" --inodes -h --metafirst | tee file2.tree
+<<OUT
 [    256 drwxr-xr-x raiseru   188 2025-01-11--14-56-37]  /volume1/test/
 [    256 drwxr-xr-x raiseru   128 2025-01-11--14-53-25]  ├── /volume1/test/#snapshots-snap1/
 [    261 drwxr-xr-x raiseru   134 2025-01-11--14-53-25]  │   ├── /volume1/test/#snapshots-snap1/b/
@@ -211,6 +214,7 @@ tree -L 4 /volume1/test -f -p -gs -F -D --timefmt "%Y-%m-%d--%H-%M-%S" --inodes 
 [    266 -rw-r--r-- raiseru     6 2025-01-11--14-56-37]  └── /volume1/test/file5-added.txt
 
 6 directories, 24 files
+OUT
 ```
 
 ### BTRFS SEND DUMP
@@ -281,9 +285,7 @@ Script 'bd.py' from https://github.com/sysnux/btrfs-snapshots-diff/blob/master/b
 
 ```shell
 sudo python3 bd.py -p /volume1/test/#snapshots-snap1/ -c /volume1/test/#snapshots-snap2/ --csv|sed "s/;/,/g"
-```
-
-```csv
+<<OUT
 snapshot,clone_ctransid=13,clone_uuid=dcf97a69908c1745978b2de857cb287d,ctransid=13,path=#snapshots-snap2,uuid=10a296565a025a4d9ac582a1a7e750aa
 utimes,atime=1736600197.0547864,ctime=1736600197.0347865,mtime=1736600197.0347865,path=
 link,path=file2-torename2.txt,path_link=file2-torename.txt
@@ -303,6 +305,7 @@ chown,group_id=1000,path=file5-added.txt,user_id=1000
 chmod,mode=420,path=file5-added.txt
 utimes,atime=1736600197.0247865,ctime=1736600197.0247865,mtime=1736600197.0247865,path=file5-added.txt
 end,headers_length=1068,stream_length=1068
+OUT
 ```
 
 ```shell
