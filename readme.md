@@ -1,11 +1,59 @@
 # Btrfs Diff
 
-## Deno Typescript Usage
+```shell
+sudo btrfs-diff /volume1/test/#snapshots-snap1/ /volume1/test/#snapshots-snap2/
+btrfs-diff --file c.dump
+```
 
-> sudo deno --allow-read --allow-run --unstable-temporal bd.ts /volume1/testsrc/#snapshots-snap1/ /volume1/testsrc/#snapshots-snap2/
-> sudo /home/raiseru/.deno/bin/deno --allow-read --allow-run --unstable-temporal bd.ts --file c.dump
+## Installing
 
-## ToDo
+```shell
+# install deno
+curl -fsSL https://deno.land/install.sh | sh
+# make it available for sudo
+sudo ln -s /home/raiseru/.deno/bin/deno /usr/local/bin/deno
+sudo deno --version
+<<OUT
+deno 2.1.5 (stable, release, x86_64-unknown-linux-gnu)
+v8 13.0.245.12-rusty
+typescript 5.6.2
+OUT
+# install script
+deno install --global --allow-read --allow-run --unstable-temporal -n btrfs-diff https://raw.githubusercontent.com/raisercostin/btrfs-diff-ts/refs/heads/main/bd.ts
+#deno uninstall -g btrfs-diff
+#/home/raiseru/.deno/bin/
+```
+
+## Usage
+
+```shell
+# Without installing this can be run directly
+# deno run https://raw.githubusercontent.com/raisercostin/btrfs-diff-ts/refs/heads/main/bd.ts --help
+btrfs-diff
+<<OUT
+Error: You must specify either '--file' or both <parent> and <child> arguments.
+
+  Usage: btrfs-diff [parent] [child]
+
+  Description:
+
+    Analyse the differences between two related btrfs subvolumes.
+
+  Options:
+
+    -h, --help                  - Show this help.
+    -f, --file        <stream>  - Use a STREAM file to get the btrfs operations.
+    -i, --info                  - Enable verbose output.
+    -v, --verbose               - Enable debug output.
+    -d, --dry-run               - Dry run. Defaults to true.
+    -t, --with-times  [mode]    - Include time modifications.
+    -p, --with-perms  [mode]    - Include permission modifications.
+    -o, --with-own    [mode]    - Include ownership modifications.
+    -a, --with-attr   [mode]    - Include attribute modifications.
+OUT
+```
+
+## ToDo: Requirements, Specs
 
 - Reply/advertise here https://www.reddit.com/r/btrfs/comments/ky1d12/btrfs_snapshot_diff/
 - Format
@@ -167,11 +215,14 @@ tree -L 4 /volume1/test -f -p -gs -F -D --timefmt "%Y-%m-%d--%H-%M-%S" --inodes 
 
 ### BTRFS SEND DUMP
 
+Btrfs send needs readonly volumes
+
 ```shell
-# Make volumes readonly
 btrfs property set -f -ts "/volume1/test/#snapshots-snap1" ro true
 btrfs property set -f -ts "/volume1/test/#snapshots-snap2" ro true
+```
 
+```shell
 sudo btrfs send -p /volume1/test/#snapshots-snap1 /volume1/test/#snapshots-snap2| btrfs receive --dump
 << 'OUT'
 At subvol /volume1/test/#snapshots-snap2
@@ -198,13 +249,14 @@ OUT
 
 ### BTRFS SEND SH DIFF
 
-Script at https://github.com/mbideau/btrfs-diff-sh install via:
-> wget "https://raw.githubusercontent.com/mbideau/btrfs-diff-sh/main/btrfs_diff.sh" bd.sh
-> chmod +x bd.sh
+Script at https://github.com/mbideau/btrfs-diff-sh
 
 ```shell
+echo Install script
+wget "https://raw.githubusercontent.com/mbideau/btrfs-diff-sh/main/btrfs_diff.sh" bd.sh
+chmod +x bd.sh
 sudo ./bd.sh /volume1/test/#snapshots-snap1/ /volume1/test/#snapshots-snap2/
-<< OUT
+<<OUT
   added: /file2-torename2.txt
   added: /file5-added.txt
 changed: /file4-tochange.txt
